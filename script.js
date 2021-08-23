@@ -79,17 +79,11 @@ const displayMovements = function (movements) {
   })
 }
 
-const createUsernames = (accs) => {
-  accs.forEach((acc) => {
-    acc.username = acc.owner
-      .toLowerCase()
-      .split(' ')
-      .map((name) => name[0])
-      .join('')
-  })
-}
+const calcDisplayBalance = (account) => {
+  account.balance = account.movements.reduce((acc, mov) => acc + mov, 0)
 
-createUsernames(accounts)
+  labelBalance.textContent = `${account.balance}€`
+}
 
 const calcDisplaySummary = (acc) => {
   const incomes = acc.movements
@@ -109,10 +103,22 @@ const calcDisplaySummary = (acc) => {
   labelSumInterest.textContent = `${interest}€`
 }
 
-const calcDisplayBalance = (movements) => {
-  const balance = movements.reduce((acc, mov) => acc + mov, 0)
+const createUsernames = (accs) => {
+  accs.forEach((acc) => {
+    acc.username = acc.owner
+      .toLowerCase()
+      .split(' ')
+      .map((name) => name[0])
+      .join('')
+  })
+}
 
-  labelBalance.textContent = `${balance}€`
+createUsernames(accounts)
+
+const updateUI = (acc) => {
+  displayMovements(acc.movements)
+  calcDisplayBalance(acc)
+  calcDisplaySummary(acc)
 }
 
 // EVENT HANDLERS
@@ -134,9 +140,28 @@ btnLogin.addEventListener('click', (e) => {
 
     inputLoginPin.blur()
 
-    displayMovements(currentAccount.movements)
-    calcDisplayBalance(currentAccount.movements)
-    calcDisplaySummary(currentAccount)
+    updateUI(currentAccount)
+  }
+})
+
+btnTransfer.addEventListener('click', (e) => {
+  e.preventDefault()
+  const amount = Number(inputTransferAmount.value)
+  const receiverAcc = accounts.find((acc) => acc.username === inputTransferTo.value)
+
+  inputTransferAmount.value = ''
+  inputTransferTo.value = ''
+
+  if (
+    amount > 0 &&
+    receiverAcc &&
+    currentAccount.balance >= amount &&
+    receiverAcc?.username !== currentAccount.username
+  ) {
+    currentAccount.movements.push(-amount)
+    receiverAcc.movements.push(amount)
+
+    updateUI(currentAccount)
   }
 })
 
